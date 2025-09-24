@@ -1,0 +1,8 @@
+[
+  {"name": "transaction_id", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "timestamp", "type": "TIMESTAMP", "mode": "REQUIRED"},
+  {"name": "store_id", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "total_items", "type": "INTEGER", "mode": "REQUIRED"},
+  {"name": "average_item_price", "type": "FLOAT", "mode": "REQUIRED"},
+  {"name": "amount", "type": "FLOAT", "mode": "REQUIRED"}
+]
