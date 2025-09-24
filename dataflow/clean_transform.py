@@ -68,7 +68,7 @@ def run(argv=None):
                         {"name": "store_id", "type": "STRING", "mode": "NULLABLE"},
                         {"name": "amount", "type": "FLOAT", "mode": "NULLABLE"},
                         {"name": "total_items", "type": "INTEGER", "mode": "NULLABLE"},
-                        {"name": "avg_price_per_item", "type": "FLOAT", "mode": "NULLABLE"}
+                        {"name": "average_item_price", "type": "FLOAT", "mode": "NULLABLE"}
                     ]
                 },
                 create_disposition=BigQueryDisposition.CREATE_NEVER,
