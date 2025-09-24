@@ -22,7 +22,7 @@ class ParseAndTransform(beam.DoFn):
                 "store_id": message.get("store_id"),
                 "amount": message.get("amount"),
                 "total_items": total_items,
-                "avg_price_per_item": avg_price
+                "average_item_price": avg_price
             }
 
             yield cleaned
