@@ -6,7 +6,7 @@ gcloud services enable cloudresourcemanager.googleapis.com
 
 ``` terraform init ```
 
-``` terraform apply -var="project_id=brave-reason-421203" -var="region=us-central1" ```
+``` terraform apply -var="project_id=your-project-id" -var="region=us-central1" ```
 
 Test data simulator
 
@@ -32,7 +32,7 @@ ___________________
 
 
 
-TEST dataflow:
+TEST raw ingestion dataflow:
 
 python raw_ingest.py \
   --runner=DirectRunner \
@@ -49,6 +49,26 @@ python raw_ingest.py \
   --output_table=your-project-id:sales_data.sales_raw \
   --temp_location=gs://your-bucket/tmp \
   --dead_letter_bucket=your-bucket
+
+
+Test transform pipeline dataflow:
+
+python clean_streaming.py \
+  --runner=DirectRunner \
+  --project_id=your-project-id \
+  --input_topic=projects/your-project-id/topics/retail-sales-stream \
+  --output_table=your-project-id:sales_data.sales_cleaned
+
+
+python clean_transform.py \
+  --runner=DataflowRunner \
+  --project_id=your-project-id \
+  --region=us-central1 \
+  --output_table=your-project-id:sales_data.sales_cleaned \
+  --temp_location=gs://your-bucket/tmp \
+  --dead_letter_bucket=your-bucket
+
+
 
 
 
