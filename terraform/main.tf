@@ -42,6 +42,7 @@ resource "google_service_account" "simulator" {
 }
 
 resource "google_project_iam_member" "simulator_pubsub_publisher" {
+  project = var.project_id 
   role   = "roles/pubsub.publisher"
   member = "serviceAccount:${google_service_account.simulator.email}"
 }
