@@ -1,55 +1,81 @@
-# 🧠 Sales Analytics Data Pipeline on GCP
+# 🧠 Sales Analytics Real-Time Data Pipeline on GCP
 
-This project demonstrates an **end-to-end real-time data pipeline** on Google Cloud Platform (GCP), built for **Sales Analytics**. It includes raw ingestion, transformation, and loading into BigQuery for real-time analysis.
+This project implements an **end-to-end real-time data pipeline** on **Google Cloud Platform (GCP)** for sales analytics use cases. It supports raw data ingestion, real-time transformation, and storage in BigQuery for analytics and dashboarding.
 
 ---
 
-## 📌 Project Structure
+## 📦 Features
+
+- 🔄 **Real-time streaming ingestion** using Pub/Sub
+- 📥 **Raw event storage** in BigQuery (`sales_raw`) for audit & replay
+- 🧹 **Real-time transformation** via Dataflow & Apache Beam
+- 📊 **Cleaned data** loaded into BigQuery (`sales_cleaned`)
+- ☁️ Fully automated provisioning using **Terraform**
+- 🔒 Secure and scalable architecture with best practices
+
+---
+
+## 🧱 Project Structure
 
 ```bash
 SalesAnalytics/
 │
-├── terraform/                   # Infrastructure as Code (Pub/Sub, BigQuery, IAM, etc.)
+├── terraform/                   # IaC for Pub/Sub, BigQuery, IAM roles, etc.
 │
 ├── dataflow/
-│   ├── raw_ingest/              # Ingests raw sales data from Pub/Sub → BigQuery (sales_raw)
+│   ├── raw_ingest/              # Ingests raw data from Pub/Sub → BQ (sales_raw)
 │   │   └── raw_ingest.py
 │   │
-│   ├── clean_transform/         # Batch cleaning: BigQuery (sales_raw) → BigQuery (sales_cleaned)
+│   ├── clean_transform/         # Batch clean: BQ (sales_raw) → BQ (sales_cleaned)
 │   │   └── clean_transform.py
 │   │
-│   └── stream_clean_transform/  # Real-time cleaning: Pub/Sub → Dataflow → BigQuery (sales_cleaned)
+│   └── stream_clean_transform/  # Real-time clean: Pub/Sub → Dataflow → BQ (sales_cleaned)
 │       └── clean_streaming.py
 │
-├── README.md                    # You're here!
+├── pubsub_simulator/            # Simulates transaction data to Pub/Sub
+├── README.md
 └── .gitignore
 
+
+
+______________________________________________________________
+
+
+📈 Pipeline Overview
 1️⃣ Raw Ingestion (Streaming)
 
-Reads sales data from Pub/Sub topic: retail-sales-stream
+Source: Pub/Sub topic retail-sales-stream
 
-Stores raw JSON into BigQuery table: sales_data.sales_raw
+Sink: BigQuery table sales_data.sales_raw
 
-Purpose: Store raw data for audit, replay, debugging
+Purpose: Store unprocessed JSON events for auditing, replay, and recovery
 
-2️⃣ Clean Transform (Streaming)
+2️⃣ Real-Time Transformation (Streaming)
 
-Reads from same Pub/Sub topic
+Source: Same Pub/Sub topic
 
-Applies transformation and cleaning:
+Transformations:
 
-Calculates total items per transaction
+Compute total items per transaction
 
-Computes average price per item
+Compute average price per item
 
-Writes to BigQuery table: sales_data.sales_cleaned
+Sink: BigQuery table sales_data.sales_cleaned
 
-Used for real-time dashboards & analytics
+Purpose: Enables near real-time dashboarding & insights
 
+3️⃣ Batch Transformation (Optional)
 
+Source: BigQuery sales_raw
 
+Sink: BigQuery sales_cleaned
 
-Enable these APIs:
+Use Case: Backfills, historical reprocessing
+
+⚙️ Setup Instructions
+✅ Prerequisites
+
+Ensure the following GCP services are enabled:
 
 pubsub.googleapis.com
 
@@ -59,113 +85,122 @@ dataflow.googleapis.com
 
 iam.googleapis.com
 
+Install required tools:
+
+# Install Apache Beam
+pip install apache-beam[gcp]
+
+# Install Terraform
+https://developer.hashicorp.com/terraform/install
+
+🚀 Step 1: Deploy Infrastructure with Terraform
+cd terraform
+terraform init
+terraform apply -var="project_id=your-project-id" -var="region=us-central1"
+
+🧪 Step 2: Test Data Generator (Pub/Sub Simulator)
+cd pubsub_simulator
+pip install -r requirements.txt
+
+# Authenticate to GCP if not already
+gcloud auth application-default login
+
+# Send sample transactions
+python simulate_transactions.py \
+  --project_id="your-project-id" \
+  --topic_id="retail-sales-stream"
 
 
-``` terraform init ```
-
-``` terraform apply -var="project_id=your-project-id" -var="region=us-central1" ```
-
-
-
-Test data simulator
-
-> cd pubsub_simulator
-
-> pip install -r requirements.txt
-
-> gcloud auth application-default login (Set your GCP credentials (if not already using ADC):)
-
->
- ``` python simulate_transactions.py --project_id="your-gcp-project-id" --topic_id="retail-sales-stream" ```
-
-_________!!!!_______
-(Optional, for Production): Use the Terraform-created Service Account
-
-You can also download the key file for the pubsub-simulator service account and authenticate like this:
+✅ Optional (for production):
+Use the Terraform-created service account and authenticate:
 
 export GOOGLE_APPLICATION_CREDENTIALS="/path/to/simulator-key.json"
 
-
-We'll handle that when we automate more later.
-___________________
-
-
-
-TEST raw ingestion dataflow:
-
+🔁 Run Pipelines
+📥 Raw Ingestion (from Pub/Sub → BigQuery sales_raw)
+▶️ DirectRunner (Local)
 python raw_ingest.py \
   --runner=DirectRunner \
   --project_id=your-project-id \
   --input_topic=projects/your-project-id/topics/retail-sales-stream \
   --output_table=your-project-id:sales_data.sales_raw
 
-
+☁️ Dataflow Runner (Production)
 python raw_ingest.py \
   --runner=DataflowRunner \
   --project_id=your-project-id \
   --region=us-central1 \
   --input_topic=projects/your-project-id/topics/retail-sales-stream \
   --output_table=your-project-id:sales_data.sales_raw \
-  --temp_location=gs://your-bucket/tmp \
-  --dead_letter_bucket=your-bucket
+  --temp_location=gs://your-bucket/tmp
 
-
-Test transform pipeline dataflow:
-
+🧹 Real-Time Clean Transform (Pub/Sub → Dataflow → BigQuery sales_cleaned)
+▶️ DirectRunner
 python clean_streaming.py \
   --runner=DirectRunner \
   --project_id=your-project-id \
   --input_topic=projects/your-project-id/topics/retail-sales-stream \
   --output_table=your-project-id:sales_data.sales_cleaned
 
+☁️ Dataflow Runner
+python clean_streaming.py \
+  --runner=DataflowRunner \
+  --project_id=your-project-id \
+  --region=us-central1 \
+  --input_topic=projects/your-project-id/topics/retail-sales-stream \
+  --output_table=your-project-id:sales_data.sales_cleaned \
+  --temp_location=gs://your-bucket/tmp
 
+🧼 Optional: Batch Cleaning Pipeline (sales_raw → sales_cleaned)
 python clean_transform.py \
   --runner=DataflowRunner \
   --project_id=your-project-id \
   --region=us-central1 \
   --output_table=your-project-id:sales_data.sales_cleaned \
-  --temp_location=gs://your-bucket/tmp \
-  --dead_letter_bucket=your-bucket
+  --temp_location=gs://your-bucket/tmp
 
+🔐 Security Best Practices
 
-Security Best Practices
+🔒 Use separate service accounts with least-privilege access
 
-Use separate service accounts for pipelines with least-privilege access
+✅ Assign IAM roles via Terraform:
 
-Set IAM roles using Terraform (roles/pubsub.subscriber, roles/bigquery.dataEditor)
+roles/pubsub.subscriber
 
-Ensure Cloud Audit Logs are enabled
+roles/bigquery.dataEditor
 
-Store secrets using Secret Manager (if needed)
+🧾 Enable Cloud Audit Logs
 
-♻️ Scalability & Resilience
+🔑 Use Secret Manager for secure credentials (if needed)
 
-Pub/Sub ensures decoupled ingestion (auto-scales)
+♻️ Scalability & Reliability
+Component	Benefit
+Pub/Sub	Decouples ingestion, auto-scales with message volume
+Dataflow	Fully managed streaming engine, handles load spikes
+BigQuery	Optimized for high-speed streaming inserts
+Raw Layer	Ensures reprocessing, debugging, and long-term storage
+Dead-letter handling	(Planned) Capture failed records for future inspection
+📊 Optional: Real-Time Dashboard
 
-Dataflow auto-scales with load
+Use Looker Studio
+ or any BI tool to visualize data from sales_data.sales_cleaned. Build dashboards showing:
 
-BigQuery supports high-throughput streaming inserts
+Sales volume by store or time
 
-Raw layer ensures recovery and reprocessing
+Items per transaction
 
-Optional dead-letter queues can be added
+Average spend per customer
 
-🛠️ To Do / Enhancements
+Real-time KPIs
 
- Add Dead-letter bucket for malformed messages
+🛠️ To-Do / Enhancements
 
- Add Airflow/Cloud Scheduler for batch job
+ Add dead-letter buckets for failed records
 
- Add unit tests for transformations
+ Schedule batch jobs using Cloud Scheduler / Airflow
 
- Add CI/CD for Terraform + Dataflow deployment
+ Add unit tests for transformation logic
 
- Add Looker dashboards
+ Implement CI/CD with GitHub Actions
 
-
-
-
-
-    
-
-   
+ Add Looker dashboards for stakeholders
