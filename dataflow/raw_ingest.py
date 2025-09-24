@@ -53,12 +53,31 @@ def run(argv=None):
         )
 
         # Parsed (valid) messages → BigQuery (sales_raw)
+                # Parsed (valid) messages → BigQuery (sales_raw)
         messages.parsed | "Write to BigQuery" >> WriteToBigQuery(
             args.output_table,
-            schema="transaction_id:STRING, timestamp:TIMESTAMP, store_id:STRING, amount:FLOAT, items:RECORD<sku:STRING, qty:INTEGER, price:FLOAT>[]",
+            schema={
+                "fields": [
+                    {"name": "transaction_id", "type": "STRING", "mode": "NULLABLE"},
+                    {"name": "timestamp", "type": "TIMESTAMP", "mode": "NULLABLE"},
+                    {"name": "store_id", "type": "STRING", "mode": "NULLABLE"},
+                    {"name": "amount", "type": "FLOAT", "mode": "NULLABLE"},
+                    {
+                        "name": "items",
+                        "type": "RECORD",
+                        "mode": "REPEATED",
+                        "fields": [
+                            {"name": "sku", "type": "STRING", "mode": "NULLABLE"},
+                            {"name": "qty", "type": "INTEGER", "mode": "NULLABLE"},
+                            {"name": "price", "type": "FLOAT", "mode": "NULLABLE"},
+                        ],
+                    },
+                ]
+            },
             create_disposition=BigQueryDisposition.CREATE_NEVER,
             write_disposition=BigQueryDisposition.WRITE_APPEND,
         )
+
 
         # Malformed → GCS only if on Dataflow
         if is_dataflow and args.dead_letter_bucket:
