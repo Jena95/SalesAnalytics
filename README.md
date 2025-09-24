@@ -4,11 +4,9 @@ gcloud services enable iam.googleapis.com
 
 gcloud services enable cloudresourcemanager.googleapis.com
 
-``` terraform init 
-```
+``` terraform init ```
 
-``` terraform apply -var="project_id=brave-reason-421203" -var="region=us-central1"
- ```
+``` terraform apply -var="project_id=brave-reason-421203" -var="region=us-central1" ```
 
 Test data simulator
 
@@ -18,9 +16,8 @@ Test data simulator
 
 > gcloud auth application-default login (Set your GCP credentials (if not already using ADC):)
 
-> ``` 
-python simulate_transactions.py --project_id="your-gcp-project-id" --topic_id="retail-sales-stream" 
-```
+>
+ ``` python simulate_transactions.py --project_id="your-gcp-project-id" --topic_id="retail-sales-stream" ```
 
 _________!!!!_______
 (Optional, for Production): Use the Terraform-created Service Account
